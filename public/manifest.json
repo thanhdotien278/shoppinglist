@@ -1,0 +1,18 @@
+{
+  "short_name": "Shopping List",
+  "name": "Shopping List Mobile PWA",
+  "description": "Premium Shopping List PWA designed for mobile shelves",
+  "icons": [
+    {
+      "src": "vite.svg",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "orientation": "portrait"
+}
