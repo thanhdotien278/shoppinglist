@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { auth, isFirebaseConfigured } from "../firebase/config";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 import { ShoppingBag, Lock, Mail, UserPlus, LogIn } from "lucide-react";
@@ -89,7 +89,7 @@ export default function Auth({ onLoginSuccess }) {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="ten@vienduong.com" 
-              style={{ width: "100%", padding: "12px 12px 12px 40px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid var(--border-glass)", borderRadius: "10px", color: "#fff", outline: "none", fontSize: "0.95rem" }}
+              style={{ width: "100%", padding: "12px 12px 12px 40px", background: "var(--bg-input)", border: "1px solid var(--border-glass)", borderRadius: "10px", color: "var(--color-text-main)", outline: "none", fontSize: "0.95rem" }}
             />
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function Auth({ onLoginSuccess }) {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••" 
-              style={{ width: "100%", padding: "12px 12px 12px 40px", background: "rgba(15, 23, 42, 0.6)", border: "1px solid var(--border-glass)", borderRadius: "10px", color: "#fff", outline: "none", fontSize: "0.95rem" }}
+              style={{ width: "100%", padding: "12px 12px 12px 40px", background: "var(--bg-input)", border: "1px solid var(--border-glass)", borderRadius: "10px", color: "var(--color-text-main)", outline: "none", fontSize: "0.95rem" }}
             />
           </div>
         </div>

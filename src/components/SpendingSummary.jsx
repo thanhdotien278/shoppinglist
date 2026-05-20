@@ -1,4 +1,3 @@
-import React from "react";
 import { Wallet, CheckSquare, TrendingDown } from "lucide-react";
 
 export default function SpendingSummary({ items }) {
@@ -41,7 +40,7 @@ export default function SpendingSummary({ items }) {
           <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginTop: "2px" }}>
             {purchasedItems}/{totalItems} <span style={{ fontSize: "0.9rem", color: "var(--color-success)", fontWeight: "600" }}>({progressPercent}%)</span>
           </h3>
-          <div style={{ width: "100%", height: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", marginTop: "8px", overflow: "hidden" }}>
+          <div style={{ width: "100%", height: "6px", background: "var(--bg-inner)", borderRadius: "3px", marginTop: "8px", overflow: "hidden" }}>
             <div style={{ width: `${progressPercent}%`, height: "100%", background: "var(--color-primary)", borderRadius: "3px", transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)" }}></div>
           </div>
         </div>

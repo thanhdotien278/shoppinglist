@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, X, ShieldAlert } from "lucide-react";
 
 export default function PriceConfirmModal({ isOpen, item, onConfirm, onCancel }) {
-  const [price, setPrice] = useState("");
-
-  useEffect(() => {
-    if (item) {
-      setPrice(item.referencePrice !== undefined ? String(item.referencePrice) : "0");
-    }
-  }, [item]);
+  const [price, setPrice] = useState(() => 
+    item?.referencePrice !== undefined ? String(item.referencePrice) : "0"
+  );
 
   if (!isOpen || !item) return null;
 
@@ -29,7 +25,7 @@ export default function PriceConfirmModal({ isOpen, item, onConfirm, onCancel })
       left: 0,
       right: 0,
       bottom: 0,
-      background: "rgba(15, 23, 42, 0.8)",
+      background: "var(--bg-scrim)",
       backdropFilter: "blur(12px)",
       WebkitBackdropFilter: "blur(12px)",
       display: "flex",
@@ -45,7 +41,7 @@ export default function PriceConfirmModal({ isOpen, item, onConfirm, onCancel })
           maxWidth: "400px",
           padding: "2rem 1.5rem",
           position: "relative",
-          border: "1px solid rgba(255, 255, 255, 0.12)"
+          border: "1px solid var(--border-glass)"
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
@@ -63,12 +59,12 @@ export default function PriceConfirmModal({ isOpen, item, onConfirm, onCancel })
           </div>
           <h3 style={{ fontSize: "1.25rem", fontWeight: "700" }}>Xác nhận Giá mua thực tế</h3>
           <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginTop: "4px" }}>
-            Sản phẩm: <span style={{ color: "#fff", fontWeight: "600" }}>{item.name}</span>
+            Sản phẩm: <span style={{ color: "var(--color-text-main)", fontWeight: "600" }}>{item.name}</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-          <div style={{ background: "rgba(15, 23, 42, 0.5)", border: "1px solid var(--border-glass)", padding: "12px", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ background: "var(--bg-inner)", border: "1px solid var(--border-glass)", padding: "12px", borderRadius: "10px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>Giá gốc tham chiếu:</span>
             <span style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--color-warning)" }}>
               {formatVND(item.referencePrice)}
@@ -89,10 +85,10 @@ export default function PriceConfirmModal({ isOpen, item, onConfirm, onCancel })
               style={{
                 width: "100%",
                 padding: "12px 14px",
-                background: "rgba(15, 23, 42, 0.8)",
+                background: "var(--bg-input)",
                 border: "1px solid var(--border-glass)",
                 borderRadius: "10px",
-                color: "#fff",
+                color: "var(--color-text-main)",
                 outline: "none",
                 fontSize: "1.1rem",
                 fontWeight: "600",

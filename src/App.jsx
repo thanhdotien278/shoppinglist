@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { auth, isFirebaseConfigured } from "./firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 import Auth from "./components/Auth";
@@ -10,8 +10,24 @@ import { dbService } from "./firebase/dbService";
 import { Search, PlusCircle, Trash2, RefreshCw, ShoppingCart, CheckCircle2 } from "lucide-react";
 
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const cached = localStorage.getItem("current_user");
+    return cached ? JSON.parse(cached) : null;
+  });
+  const [authLoading, setAuthLoading] = useState(() => {
+    return !!(isFirebaseConfigured && auth);
+  });
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "light" ? "dark" : "light");
+  };
+
   const [items, setItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(false);
   
@@ -35,8 +51,8 @@ export default function App() {
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
           setUser(firebaseUser);
+          localStorage.setItem("current_user", JSON.stringify(firebaseUser));
         } else {
-          // Check local persistent state
           const cachedUser = localStorage.getItem("current_user");
           if (cachedUser) {
             setUser(JSON.parse(cachedUser));
@@ -47,25 +63,10 @@ export default function App() {
         setAuthLoading(false);
       });
       return unsubscribe;
-    } else {
-      const cachedUser = localStorage.getItem("current_user");
-      if (cachedUser) {
-        setUser(JSON.parse(cachedUser));
-      }
-      setAuthLoading(false);
     }
   }, []);
 
-  // Fetch Items when user signs in
-  useEffect(() => {
-    if (user) {
-      loadShoppingList();
-    } else {
-      setItems([]);
-    }
-  }, [user]);
-
-  const loadShoppingList = async () => {
+  const loadShoppingList = useCallback(async () => {
     if (!user) return;
     setLoadingItems(true);
     try {
@@ -76,7 +77,17 @@ export default function App() {
     } finally {
       setLoadingItems(false);
     }
-  };
+  }, [user]);
+
+  // Fetch Items when user signs in
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        loadShoppingList();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user, loadShoppingList]);
 
   const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
@@ -85,6 +96,7 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null);
+    setItems([]);
     localStorage.removeItem("current_user");
   };
 
@@ -215,7 +227,7 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: "600px", margin: "0 auto", padding: "0 12px 2rem 12px" }}>
-      <Header user={user} onLogout={handleLogout} onImportSuccess={loadShoppingList} />
+      <Header user={user} onLogout={handleLogout} onImportSuccess={loadShoppingList} theme={theme} onToggleTheme={toggleTheme} />
 
       <main>
         {items.length > 0 && <SpendingSummary items={items} />}
@@ -232,10 +244,10 @@ export default function App() {
               style={{
                 width: "100%",
                 padding: "10px 10px 10px 38px",
-                background: "rgba(30, 41, 59, 0.8)",
+                background: "var(--bg-input)",
                 border: "1px solid var(--border-glass)",
                 borderRadius: "10px",
-                color: "#fff",
+                color: "var(--color-text-main)",
                 outline: "none",
                 fontSize: "0.9rem"
               }}
@@ -246,10 +258,10 @@ export default function App() {
             onClick={() => setShowAddForm(!showAddForm)}
             style={{
               padding: "10px 14px",
-              background: "rgba(59, 130, 246, 0.15)",
+              background: "var(--bg-inner)",
               border: "1px solid var(--border-glass)",
               borderRadius: "10px",
-              color: "#fff",
+              color: "var(--color-text-main)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
@@ -275,7 +287,7 @@ export default function App() {
                 value={newManualName}
                 onChange={e => setNewManualName(e.target.value)}
                 required
-                style={{ width: "100%", padding: "10px", background: "rgba(15,23,42,0.6)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "#fff", fontSize: "0.9rem", outline: "none" }}
+                style={{ width: "100%", padding: "10px", background: "var(--bg-input)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "var(--color-text-main)", fontSize: "0.9rem", outline: "none" }}
               />
               <div style={{ display: "flex", gap: "10px" }}>
                 <input 
@@ -283,7 +295,7 @@ export default function App() {
                   placeholder="Giá tham chiếu (VND)" 
                   value={newManualPrice}
                   onChange={e => setNewManualPrice(e.target.value)}
-                  style={{ flex: 2, padding: "10px", background: "rgba(15,23,42,0.6)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "#fff", fontSize: "0.9rem", outline: "none" }}
+                  style={{ flex: 2, padding: "10px", background: "var(--bg-input)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "var(--color-text-main)", fontSize: "0.9rem", outline: "none" }}
                 />
                 <input 
                   type="number" 
@@ -291,7 +303,7 @@ export default function App() {
                   placeholder="SL" 
                   value={newManualQty}
                   onChange={e => setNewManualQty(e.target.value)}
-                  style={{ flex: 1, padding: "10px", background: "rgba(15,23,42,0.6)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "#fff", fontSize: "0.9rem", outline: "none", textAlign: "center" }}
+                  style={{ flex: 1, padding: "10px", background: "var(--bg-input)", border: "1px solid var(--border-glass)", borderRadius: "8px", color: "var(--color-text-main)", fontSize: "0.9rem", outline: "none", textAlign: "center" }}
                 />
               </div>
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "4px" }}>
@@ -352,10 +364,10 @@ export default function App() {
             ) : (
               /* High aesthetics Empty state */
               <div className="glass-card animate-slide" style={{ padding: "3rem 1.5rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", borderStyle: "dashed" }}>
-                <div style={{ background: "rgba(255,255,255,0.03)", width: "64px", height: "64px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
+                <div style={{ background: "var(--bg-inner)", width: "64px", height: "64px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1rem" }}>
                   <ShoppingCart size={28} color="var(--color-text-muted)" style={{ opacity: 0.5 }} />
                 </div>
-                <h4 style={{ fontSize: "1.05rem", fontWeight: "600", color: "#fff" }}>
+                <h4 style={{ fontSize: "1.05rem", fontWeight: "600", color: "var(--color-text-main)" }}>
                   {items.length === 0 
                     ? "Không có sản phẩm nào" 
                     : activeTab === "need-to-buy" 
@@ -403,6 +415,7 @@ export default function App() {
 
       {/* Global Interactive Modal Backdrop */}
       <PriceConfirmModal 
+        key={selectedItemForModal?.id || "none"}
         isOpen={isModalOpen}
         item={selectedItemForModal}
         onConfirm={handleConfirmPurchase}

@@ -70,12 +70,12 @@ export const dbService = {
     }
   },
 
-  async uploadImage(userId, itemId, file) {
+  async uploadImage(userId, itemId, file, field = "imageUrl") {
     if (isFirebaseConfigured && storage) {
-      const storageRef = ref(storage, `users/${userId}/images/${itemId}_${Date.now()}.jpg`);
+      const storageRef = ref(storage, `users/${userId}/images/${itemId}_${field}_${Date.now()}.jpg`);
       await uploadBytes(storageRef, file);
       const downloadUrl = await getDownloadURL(storageRef);
-      await this.updateItem(userId, itemId, { imageUrl: downloadUrl });
+      await this.updateItem(userId, itemId, { [field]: downloadUrl });
       return downloadUrl;
     } else {
       // Fallback: Convert file to Base64 and save in LocalStorage
@@ -84,7 +84,7 @@ export const dbService = {
         reader.readAsDataURL(file);
         reader.onload = async () => {
           const base64String = reader.result;
-          await this.updateItem(userId, itemId, { imageUrl: base64String });
+          await this.updateItem(userId, itemId, { [field]: base64String });
           resolve(base64String);
         };
         reader.onerror = error => reject(error);

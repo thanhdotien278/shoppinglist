@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { FileSpreadsheet, Upload, Loader2, CheckCircle } from "lucide-react";
+import { FileSpreadsheet, Loader2, CheckCircle } from "lucide-react";
 import { dbService } from "../firebase/dbService";
 
 export default function ExcelImporter({ userId, onImportSuccess }) {

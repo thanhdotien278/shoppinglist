@@ -1,11 +1,13 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { Camera, Plus, Minus, ChevronDown, ChevronUp, Trash2, Undo2, Image, Loader2 } from "lucide-react";
 import { dbService } from "../firebase/dbService";
 
 export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete, onTogglePurchase }) {
   const [uploading, setUploading] = useState(false);
+  const [altUploading, setAltUploading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const fileInputRef = useRef(null);
+  const altFileInputRef = useRef(null);
 
   const formatVND = (value) => {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
@@ -31,6 +33,26 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
     }
   };
 
+  const handleAlternativeImageClick = () => {
+    if (item.purchased || altUploading) return;
+    altFileInputRef.current.click();
+  };
+
+  const handleAlternativeFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setAltUploading(true);
+    try {
+      const alternativeImageUrl = await dbService.uploadImage(userId, item.id, file, "alternativeImageUrl");
+      onItemUpdate(item.id, { alternativeImageUrl });
+    } catch (err) {
+      console.error("Failed to upload alternative image:", err);
+    } finally {
+      setAltUploading(false);
+    }
+  };
+
   const updateQuantity = async (amount) => {
     const newQty = Math.max(1, item.quantity + amount);
     if (newQty !== item.quantity) {
@@ -45,7 +67,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
 
   const activePrice = item.purchased ? item.actualPrice : item.referencePrice;
   const subtotal = activePrice * item.quantity;
-  const hasDetails = item.notes || item.alternative;
+  const hasDetails = item.notes || item.alternative || item.alternativeImageUrl;
 
   return (
     <div 
@@ -77,7 +99,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             fontSize: "1.1rem", 
             fontWeight: "600", 
             lineHeight: "1.3",
-            color: "#fff",
+            color: "var(--color-text-main)",
             textDecoration: item.purchased ? "line-through" : "none",
             opacity: item.purchased ? 0.7 : 1
           }}>
@@ -92,8 +114,8 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             width: "44px",
             height: "44px",
             borderRadius: "10px",
-            background: item.purchased ? "var(--color-success)" : "rgba(255, 255, 255, 0.05)",
-            border: item.purchased ? "none" : "2px solid rgba(255, 255, 255, 0.15)",
+            background: item.purchased ? "var(--color-success)" : "var(--bg-inner)",
+            border: item.purchased ? "none" : "2px solid var(--border-inner)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -120,7 +142,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             width: "76px",
             height: "76px",
             borderRadius: "12px",
-            background: "rgba(15, 23, 42, 0.6)",
+            background: "var(--bg-input)",
             border: "1px solid var(--border-glass)",
             position: "relative",
             overflow: "hidden",
@@ -170,9 +192,9 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Số lượng:</span>
             
             {item.purchased ? (
-              <span style={{ fontSize: "0.95rem", fontWeight: "600", color: "#fff" }}>x{item.quantity}</span>
+              <span style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--color-text-main)" }}>x{item.quantity}</span>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", background: "rgba(15, 23, 42, 0.6)", borderRadius: "8px", border: "1px solid var(--border-glass)", padding: "2px" }}>
+              <div style={{ display: "flex", alignItems: "center", background: "var(--bg-input)", borderRadius: "8px", border: "1px solid var(--border-glass)", padding: "2px" }}>
                 <button 
                   onClick={() => updateQuantity(-1)}
                   style={{
@@ -190,7 +212,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
                 >
                   <Minus size={14} />
                 </button>
-                <span style={{ fontSize: "0.9rem", fontWeight: "600", width: "24px", textAlign: "center" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: "600", width: "24px", textAlign: "center", color: "var(--color-text-main)" }}>
                   {item.quantity}
                 </span>
                 <button 
@@ -214,9 +236,9 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             )}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "4px", marginTop: "4px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderTop: "1px solid var(--border-glass)", paddingTop: "4px", marginTop: "4px" }}>
             <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Thành tiền:</span>
-            <span style={{ fontSize: "1.05rem", fontWeight: "700", color: "#fff" }}>
+            <span style={{ fontSize: "1.05rem", fontWeight: "700", color: "var(--color-text-main)" }}>
               {formatVND(subtotal)}
             </span>
           </div>
@@ -225,7 +247,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
 
       {/* Expandable note and replacements section */}
       {(hasDetails || !item.purchased) && (
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", marginTop: "10px", paddingTop: "6px" }}>
+        <div style={{ borderTop: "1px solid var(--border-glass)", marginTop: "10px", paddingTop: "6px" }}>
           <button 
             onClick={() => setExpanded(!expanded)}
             style={{
@@ -253,7 +275,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
               <div>
                 <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", display: "block" }}>Ghi chú:</span>
                 {item.purchased ? (
-                  <p style={{ fontSize: "0.85rem", color: "#fff", opacity: 0.8, marginTop: "2px" }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--color-text-main)", opacity: 0.8, marginTop: "2px" }}>
                     {item.notes || "Không có ghi chú"}
                   </p>
                 ) : (
@@ -271,11 +293,11 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
                     placeholder="Thêm ghi chú mua sắm..."
                     style={{
                       width: "100%",
-                      background: "rgba(15, 23, 42, 0.4)",
+                      background: "var(--bg-inner)",
                       border: "1px solid var(--border-glass)",
                       borderRadius: "6px",
                       padding: "6px 10px",
-                      color: "#fff",
+                      color: "var(--color-text-main)",
                       fontSize: "0.85rem",
                       marginTop: "2px",
                       outline: "none"
@@ -284,39 +306,90 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
                 )}
               </div>
 
-              {/* Alternative item field */}
+              {/* Alternative item field & Image upload */}
               <div>
                 <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", display: "block" }}>Sản phẩm thay thế:</span>
-                {item.purchased ? (
-                  <p style={{ fontSize: "0.85rem", color: "#fff", opacity: 0.8, marginTop: "2px" }}>
-                    {item.alternative || "Không có"}
-                  </p>
-                ) : (
-                  <input 
-                    type="text" 
-                    value={item.alternative} 
-                    onChange={e => onItemUpdate(item.id, { alternative: e.target.value })}
-                    onBlur={async () => {
-                      try {
-                        await dbService.updateItem(userId, item.id, { alternative: item.alternative });
-                      } catch (err) {
-                        console.error("Failed to save alternative:", err);
-                      }
-                    }}
-                    placeholder="Sản phẩm thay thế nếu hết hàng..."
+                <div style={{ display: "flex", gap: "10px", marginTop: "4px", alignItems: "center" }}>
+                  <div style={{ flexGrow: 1 }}>
+                    {item.purchased ? (
+                      <p style={{ fontSize: "0.85rem", color: "var(--color-text-main)", opacity: 0.8 }}>
+                        {item.alternative || "Không có"}
+                      </p>
+                    ) : (
+                      <input 
+                        type="text" 
+                        value={item.alternative || ""} 
+                        onChange={e => onItemUpdate(item.id, { alternative: e.target.value })}
+                        onBlur={async () => {
+                          try {
+                            await dbService.updateItem(userId, item.id, { alternative: item.alternative });
+                          } catch (err) {
+                            console.error("Failed to save alternative:", err);
+                          }
+                        }}
+                        placeholder="Sản phẩm thay thế nếu hết hàng..."
+                        style={{
+                          width: "100%",
+                          background: "var(--bg-inner)",
+                          border: "1px solid var(--border-glass)",
+                          borderRadius: "6px",
+                          padding: "6px 10px",
+                          color: "var(--color-text-main)",
+                          fontSize: "0.85rem",
+                          outline: "none"
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Alternative Image Selector */}
+                  <div 
+                    onClick={handleAlternativeImageClick}
                     style={{
-                      width: "100%",
-                      background: "rgba(15, 23, 42, 0.4)",
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "8px",
+                      background: "var(--bg-input)",
                       border: "1px solid var(--border-glass)",
-                      borderRadius: "6px",
-                      padding: "6px 10px",
-                      color: "#fff",
-                      fontSize: "0.85rem",
-                      marginTop: "2px",
-                      outline: "none"
+                      position: "relative",
+                      overflow: "hidden",
+                      cursor: item.purchased ? "default" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0
                     }}
-                  />
-                )}
+                  >
+                    {!item.purchased && (
+                      <input 
+                        type="file" 
+                        ref={altFileInputRef} 
+                        onChange={handleAlternativeFileChange} 
+                        accept="image/*" 
+                        style={{ display: "none" }}
+                      />
+                    )}
+
+                    {altUploading ? (
+                      <Loader2 size={16} className="animate-spin" color="var(--color-primary)" />
+                    ) : item.alternativeImageUrl ? (
+                      <img 
+                        src={item.alternativeImageUrl} 
+                        alt="Thay thế" 
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                      />
+                    ) : item.purchased ? (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", opacity: 0.4 }}>
+                        <Image size={16} color="var(--color-text-muted)" />
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", opacity: 0.6 }}>
+                        <Camera size={16} color="var(--color-text-muted)" />
+                        <span style={{ fontSize: "0.55rem", color: "var(--color-text-muted)" }}>Ảnh</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Delete item button */}

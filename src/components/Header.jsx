@@ -1,10 +1,9 @@
-import React from "react";
-import { LogOut, ShoppingBag } from "lucide-react";
+import { LogOut, ShoppingBag, Sun, Moon } from "lucide-react";
 import ExcelImporter from "./ExcelImporter";
 import { auth, isFirebaseConfigured } from "../firebase/config";
 import { signOut } from "firebase/auth";
 
-export default function Header({ user, onLogout, onImportSuccess }) {
+export default function Header({ user, onLogout, onImportSuccess, theme, onToggleTheme }) {
   
   const handleLogoutClick = async () => {
     if (isFirebaseConfigured && auth) {
@@ -43,7 +42,7 @@ export default function Header({ user, onLogout, onImportSuccess }) {
           }}>
             <ShoppingBag size={20} color="#3b82f6" />
           </div>
-          <h1 style={{ fontSize: "1.2rem", fontWeight: "700", letterSpacing: "-0.5px", color: "#fff" }}>Shopping List</h1>
+          <h1 style={{ fontSize: "1.2rem", fontWeight: "700", letterSpacing: "-0.5px", color: "var(--color-text-main)" }}>Shopping List</h1>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -57,6 +56,24 @@ export default function Header({ user, onLogout, onImportSuccess }) {
           }}>
             {user?.email}
           </span>
+          <button 
+            onClick={onToggleTheme}
+            title={theme === "light" ? "Chuyển sang Giao diện Tối" : "Chuyển sang Giao diện Sáng"}
+            style={{
+              background: "var(--bg-inner)",
+              border: "1px solid var(--border-inner)",
+              borderRadius: "8px",
+              width: "34px",
+              height: "34px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: "var(--color-text-main)"
+            }}
+          >
+            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
           <button 
             onClick={handleLogoutClick}
             style={{
@@ -77,7 +94,7 @@ export default function Header({ user, onLogout, onImportSuccess }) {
         </div>
       </div>
 
-      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.04)", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
           {isFirebaseConfigured ? "Đồng bộ Firestore trực tuyến" : "Offline LocalStorage"}
         </span>
