@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { Camera, Plus, Minus, ChevronDown, ChevronUp, Trash2, Undo2, Image, Loader2 } from "lucide-react";
+import { Camera, Plus, Minus, ChevronDown, ChevronUp, Trash2, Undo2, Image, Loader2, Pencil, X } from "lucide-react";
 import { dbService } from "../firebase/dbService";
 
 export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete, onTogglePurchase }) {
   const [uploading, setUploading] = useState(false);
   const [altUploading, setAltUploading] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
   const fileInputRef = useRef(null);
   const altFileInputRef = useRef(null);
 
@@ -14,6 +15,17 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
   };
 
   const handleImageClick = () => {
+    if (uploading) return;
+    if (item.imageUrl) {
+      setPreviewImageUrl(item.imageUrl);
+      return;
+    }
+
+    fileInputRef.current.click();
+  };
+
+  const handleEditImageClick = (e) => {
+    e.stopPropagation();
     if (uploading) return;
     fileInputRef.current.click();
   };
@@ -30,6 +42,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
       console.error("Failed to upload image:", err);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -50,6 +63,7 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
       console.error("Failed to upload alternative image:", err);
     } finally {
       setAltUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -136,21 +150,13 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
       <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
         
         {/* Photo Container */}
-        <div 
-          onClick={handleImageClick}
+        <div
           style={{
             width: "76px",
-            height: "76px",
-            borderRadius: "12px",
-            background: "var(--bg-input)",
-            border: "1px solid var(--border-glass)",
-            position: "relative",
-            overflow: "hidden",
-            cursor: "pointer",
+            flexShrink: 0,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0
+            flexDirection: "column",
+            gap: "6px"
           }}
         >
           <input 
@@ -161,20 +167,72 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
             style={{ display: "none" }}
           />
 
-          {uploading ? (
-            <Loader2 size={20} className="animate-spin" color="var(--color-primary)" />
-          ) : item.imageUrl ? (
-            <img 
-              src={item.imageUrl} 
-              alt={item.name} 
-              style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-            />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", opacity: 0.6 }}>
-              <Camera size={20} color="var(--color-text-muted)" />
-              <span style={{ fontSize: "0.6rem", color: "var(--color-text-muted)" }}>Thêm ảnh</span>
-            </div>
-          )}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleImageClick}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleImageClick();
+              }
+            }}
+            aria-label={item.imageUrl ? `Xem ảnh ${item.name}` : `Thêm ảnh ${item.name}`}
+            style={{
+              width: "100%",
+              height: "76px",
+              borderRadius: "12px",
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-glass)",
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            {uploading ? (
+              <Loader2 size={20} className="animate-spin" color="var(--color-primary)" />
+            ) : item.imageUrl ? (
+              <img 
+                src={item.imageUrl} 
+                alt={item.name} 
+                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+              />
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", opacity: 0.6 }}>
+                <Camera size={20} color="var(--color-text-muted)" />
+                <span style={{ fontSize: "0.6rem", color: "var(--color-text-muted)" }}>Thêm ảnh</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleEditImageClick}
+            disabled={uploading}
+            aria-label={`Thay ảnh ${item.name}`}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "3px",
+              padding: "5px 6px",
+              borderRadius: "8px",
+              border: "1px solid var(--border-glass)",
+              background: "var(--bg-inner)",
+              color: "var(--color-text-main)",
+              fontSize: "0.7rem",
+              fontWeight: "700",
+              cursor: uploading ? "default" : "pointer",
+              opacity: uploading ? 0.55 : 1
+            }}
+          >
+            <Pencil size={10} />
+            Edit
+          </button>
         </div>
 
         {/* Pricing details and quantity controls */}
@@ -419,6 +477,60 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {previewImageUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Ảnh đầy đủ của ${item.name}`}
+          onClick={() => setPreviewImageUrl("")}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(2, 6, 23, 0.88)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px"
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewImageUrl("")}
+            aria-label="Đóng ảnh"
+            style={{
+              position: "absolute",
+              top: "16px",
+              right: "16px",
+              width: "40px",
+              height: "40px",
+              borderRadius: "999px",
+              border: "1px solid rgba(255, 255, 255, 0.18)",
+              background: "rgba(15, 23, 42, 0.86)",
+              color: "#fff",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={previewImageUrl}
+            alt={item.name}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: "100%",
+              maxHeight: "86vh",
+              objectFit: "contain",
+              borderRadius: "14px",
+              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.45)"
+            }}
+          />
         </div>
       )}
     </div>
