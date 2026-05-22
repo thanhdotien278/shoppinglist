@@ -1,7 +1,24 @@
 import { useState } from "react";
-import { auth, isFirebaseConfigured } from "../firebase/config";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { supabase, isSupabaseConfigured } from "../supabase/config";
 import { ShoppingBag, Lock, Mail, UserPlus, LogIn } from "lucide-react";
+
+const normalizeSupabaseUser = (user) => ({
+  ...user,
+  uid: user.id
+});
+
+const registerUser = async (email, password) => {
+  const response = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.error || "Không đăng ký được tài khoản.");
+  }
+};
 
 export default function Auth({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
@@ -18,17 +35,20 @@ export default function Auth({ onLoginSuccess }) {
       return;
     }
 
-    if (isFirebaseConfigured && auth) {
+    if (isSupabaseConfigured && supabase) {
       try {
         if (isRegister) {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          onLoginSuccess(userCredential.user);
-        } else {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          onLoginSuccess(userCredential.user);
+          await registerUser(email, password);
         }
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        onLoginSuccess(normalizeSupabaseUser(data.user));
       } catch (err) {
-        setError(err.message.includes("auth/user-not-found") ? "Tài khoản không tồn tại." : err.message);
+        const message = err.message === "User already registered"
+          ? "Email này đã được đăng ký. Vui lòng chuyển sang đăng nhập."
+          : err.message;
+        setError(message);
       }
     } else {
       // Mock Auth Flow using LocalStorage
@@ -69,7 +89,7 @@ export default function Auth({ onLoginSuccess }) {
         </div>
         <h2 style={{ fontSize: "1.75rem", fontWeight: "700", letterSpacing: "-0.5px" }}>Shopping List</h2>
         <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.5rem" }}>
-          {isFirebaseConfigured ? "Đồng bộ hóa đám mây trực tuyến" : "Offline Sandbox Mode (LocalStorage)"}
+          {isSupabaseConfigured ? "Đồng bộ hóa Supabase trực tuyến" : "Offline Sandbox Mode (LocalStorage)"}
         </p>
       </div>
 

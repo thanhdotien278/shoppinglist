@@ -102,6 +102,94 @@ body {
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
+/* Body-level lightbox. Keep this outside card stacking contexts. */
+.image-preview-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  background: rgba(2, 6, 23, 0.92);
+  cursor: zoom-out;
+  overflow: hidden;
+}
+
+.image-preview-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 36px);
+  max-height: calc(100vh - 36px);
+  max-height: calc(100dvh - 36px);
+  pointer-events: none;
+}
+
+.image-preview-full {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: calc(100vw - 36px);
+  max-height: calc(100vh - 36px);
+  max-height: calc(100dvh - 36px);
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  cursor: default;
+  pointer-events: auto;
+}
+
+.image-preview-close {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 2147483647;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+.image-preview-close:hover {
+  background: rgba(30, 41, 59, 0.98);
+}
+
+.image-preview-close:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.82);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .image-preview-modal {
+    padding: 12px;
+  }
+
+  .image-preview-frame {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .image-preview-full {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 10px;
+  }
+}
+
 /* Animations */
 @keyframes slideIn {
   from { transform: translateY(20px); opacity: 0; }

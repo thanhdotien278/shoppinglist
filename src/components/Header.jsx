@@ -1,16 +1,15 @@
 import { LogOut, ShoppingBag, Sun, Moon } from "lucide-react";
 import ExcelImporter from "./ExcelImporter";
-import { auth, isFirebaseConfigured } from "../firebase/config";
-import { signOut } from "firebase/auth";
+import { supabase, isSupabaseConfigured } from "../supabase/config";
 
 export default function Header({ user, onLogout, onImportSuccess, theme, onToggleTheme }) {
   
   const handleLogoutClick = async () => {
-    if (isFirebaseConfigured && auth) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        await signOut(auth);
+        await supabase.auth.signOut();
       } catch (err) {
-        console.error("Firebase sign out failed:", err);
+        console.error("Supabase sign out failed:", err);
       }
     }
     onLogout();
@@ -74,29 +73,31 @@ export default function Header({ user, onLogout, onImportSuccess, theme, onToggl
           >
             {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <button 
-            onClick={handleLogoutClick}
-            style={{
-              background: "rgba(239, 68, 68, 0.1)",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-              borderRadius: "8px",
-              width: "34px",
-              height: "34px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#f87171"
-            }}
-          >
-            <LogOut size={16} />
-          </button>
+          {isSupabaseConfigured && (
+            <button 
+              onClick={handleLogoutClick}
+              style={{
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                borderRadius: "8px",
+                width: "34px",
+                height: "34px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#f87171"
+              }}
+            >
+              <LogOut size={16} />
+            </button>
+          )}
         </div>
       </div>
 
       <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
-          {isFirebaseConfigured ? "Đồng bộ Firestore trực tuyến" : "Offline LocalStorage"}
+          {isSupabaseConfigured ? "Đồng bộ Supabase trực tuyến" : "Dữ liệu local trên thiết bị"}
         </span>
         <ExcelImporter userId={user.uid} onImportSuccess={onImportSuccess} />
       </div>

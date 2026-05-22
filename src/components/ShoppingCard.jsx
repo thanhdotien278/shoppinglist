@@ -1,6 +1,60 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Camera, Plus, Minus, ChevronDown, ChevronUp, Trash2, Undo2, Image, Loader2, Pencil, X } from "lucide-react";
-import { dbService } from "../firebase/dbService";
+import { dbService } from "../supabase/dbService";
+
+function ImagePreviewModal({ src, alt, onClose }) {
+  const closeButtonRef = useRef(null);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="image-preview-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Ảnh đầy đủ của ${alt}`}
+      onClick={onClose}
+    >
+      <button
+        ref={closeButtonRef}
+        type="button"
+        className="image-preview-close"
+        onClick={onClose}
+        aria-label="Đóng ảnh"
+      >
+        <X size={22} />
+      </button>
+
+      <div className="image-preview-frame">
+        <img
+          className="image-preview-full"
+          src={src}
+          alt={alt}
+          onClick={(event) => event.stopPropagation()}
+        />
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete, onTogglePurchase }) {
   const [uploading, setUploading] = useState(false);
@@ -481,57 +535,11 @@ export default function ShoppingCard({ item, userId, onItemUpdate, onItemDelete,
       )}
 
       {previewImageUrl && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Ảnh đầy đủ của ${item.name}`}
-          onClick={() => setPreviewImageUrl("")}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1000,
-            background: "rgba(2, 6, 23, 0.88)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px"
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setPreviewImageUrl("")}
-            aria-label="Đóng ảnh"
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              width: "40px",
-              height: "40px",
-              borderRadius: "999px",
-              border: "1px solid rgba(255, 255, 255, 0.18)",
-              background: "rgba(15, 23, 42, 0.86)",
-              color: "#fff",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}
-          >
-            <X size={20} />
-          </button>
-          <img
-            src={previewImageUrl}
-            alt={item.name}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: "100%",
-              maxHeight: "86vh",
-              objectFit: "contain",
-              borderRadius: "14px",
-              boxShadow: "0 24px 80px rgba(0, 0, 0, 0.45)"
-            }}
-          />
-        </div>
+        <ImagePreviewModal
+          src={previewImageUrl}
+          alt={item.name}
+          onClose={() => setPreviewImageUrl("")}
+        />
       )}
     </div>
   );

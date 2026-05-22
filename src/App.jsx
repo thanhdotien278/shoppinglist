@@ -1,21 +1,34 @@
 import { useState, useEffect, useCallback } from "react";
-import { auth, isFirebaseConfigured } from "./firebase/config";
-import { onAuthStateChanged } from "firebase/auth";
+import { supabase, isSupabaseConfigured } from "./supabase/config";
 import Auth from "./components/Auth";
 import Header from "./components/Header";
 import SpendingSummary from "./components/SpendingSummary";
 import ShoppingCard from "./components/ShoppingCard";
 import PriceConfirmModal from "./components/PriceConfirmModal";
-import { dbService } from "./firebase/dbService";
+import { dbService } from "./supabase/dbService";
 import { Search, PlusCircle, Trash2, RefreshCw, ShoppingCart, CheckCircle2 } from "lucide-react";
+
+const LOCAL_USER = {
+  uid: "local-user",
+  email: "local@tiendo.dev"
+};
+
+const normalizeSupabaseUser = (user) => ({
+  ...user,
+  uid: user.id
+});
 
 export default function App() {
   const [user, setUser] = useState(() => {
+    if (!isSupabaseConfigured) {
+      return LOCAL_USER;
+    }
+
     const cached = localStorage.getItem("current_user");
     return cached ? JSON.parse(cached) : null;
   });
   const [authLoading, setAuthLoading] = useState(() => {
-    return !!(isFirebaseConfigured && auth);
+    return !!(isSupabaseConfigured && supabase);
   });
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
@@ -47,22 +60,44 @@ export default function App() {
 
   // Listen to Auth State
   useEffect(() => {
-    if (isFirebaseConfigured && auth) {
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-          setUser(firebaseUser);
-          localStorage.setItem("current_user", JSON.stringify(firebaseUser));
-        } else {
-          const cachedUser = localStorage.getItem("current_user");
-          if (cachedUser) {
-            setUser(JSON.parse(cachedUser));
+    if (isSupabaseConfigured && supabase) {
+      const restoreSession = async () => {
+        try {
+          const { data } = await supabase.auth.getSession();
+          const sessionUser = data.session?.user;
+          if (sessionUser) {
+            const normalizedUser = normalizeSupabaseUser(sessionUser);
+            setUser(normalizedUser);
+            localStorage.setItem("current_user", JSON.stringify(normalizedUser));
           } else {
+            localStorage.removeItem("current_user");
             setUser(null);
           }
+        } catch (err) {
+          console.error("Failed to restore Supabase session:", err);
+          localStorage.removeItem("current_user");
+          setUser(null);
+        } finally {
+          setAuthLoading(false);
+        }
+      };
+
+      restoreSession();
+
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const sessionUser = session?.user;
+        if (sessionUser) {
+          const normalizedUser = normalizeSupabaseUser(sessionUser);
+          setUser(normalizedUser);
+          localStorage.setItem("current_user", JSON.stringify(normalizedUser));
+        } else {
+          localStorage.removeItem("current_user");
+          setUser(null);
         }
         setAuthLoading(false);
       });
-      return unsubscribe;
+
+      return () => listener.subscription.unsubscribe();
     }
   }, []);
 
@@ -95,9 +130,15 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    setUser(null);
     setItems([]);
     localStorage.removeItem("current_user");
+
+    if (isSupabaseConfigured) {
+      setUser(null);
+      return;
+    }
+
+    setUser(LOCAL_USER);
   };
 
   // Callback to update an item locally + DB is triggered in ShoppingCard

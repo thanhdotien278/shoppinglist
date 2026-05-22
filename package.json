@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "db:apply": "node scripts/apply-supabase-schema.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^12.13.0",
+    "@supabase/supabase-js": "^2.106.1",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -25,6 +26,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "pg": "^8.21.0",
     "vite": "^8.0.12"
   }
 }
