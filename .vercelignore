@@ -1,6 +1,9 @@
 node_modules
 dist
-open-design
-open-design-local
+.playwright-mcp
+open-design/
+open-design/**
+open-design-local/
+open-design-local/**
 .env
 .env*.local

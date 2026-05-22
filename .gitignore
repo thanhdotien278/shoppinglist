@@ -28,3 +28,6 @@ dist-ssr
 .env*.local
 
 .vercel
+.playwright-mcp
+open-design
+open-design-local
